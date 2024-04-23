@@ -1,0 +1,43 @@
+pipeline {
+    agent {
+        docker{
+        image 'maven:3.6.1-jdk-8-slim'
+        args  '-v $HOME/.m2:/root/.m2'
+        }
+    }
+    stages{
+        stage('Build'){
+            steps{
+                echo 'Building Worker Application (IN DOCKER!)'
+                dir('worker'){
+                    sh 'mvn compile'
+                }
+            }
+        }
+        stage('Test'){
+            steps{
+                echo 'Running Unit Tests on worker app (IN DOCKER!)'
+                dir('worker'){
+                    sh 'mvn clean test'
+                }
+            }
+        }
+        stage('Package'){
+            steps{
+                echo 'Packaging Worker Application into a .JAR file.. USING DOCKER IN DOCKER!'
+                dir('worker'){
+                    sh 'mvn package -DskipTests'
+                    archiveArtifacts artifacts: '**/target/*.jar',
+                    fingerprint: true
+                }
+            }
+        }
+
+    }
+    post {
+        always {
+            echo 'The Job has been completed.. USING DOCKER IN DOCKER!'
+        }
+    }
+
+}
